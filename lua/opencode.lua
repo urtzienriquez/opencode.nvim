@@ -78,8 +78,6 @@ end
 ---sending future requests to it and subscribing to its events.
 M.select_server = function()
   -- Should we also offer connected and configured server here?
-  local Promise = require("opencode.promise")
-
   return require("opencode.server")
     .get_all()
     :next(function(servers) ---@param servers opencode.server.Server[]
@@ -90,16 +88,9 @@ M.select_server = function()
       return server
     end)
     :catch(function(err)
-      if err and err:find("No `opencode` processes found") then
-        vim.notify("No local `opencode` servers found. Prompting for remote connection...", vim.log.levels.INFO, {
-          title = "opencode",
-        })
-        return require("opencode.ui.select_server").connect_remote()
-      end
       if err then
         vim.notify(err, vim.log.levels.ERROR, { title = "opencode" })
       end
-      return Promise.reject()
     end)
 end
 

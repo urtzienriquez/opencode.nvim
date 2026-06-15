@@ -91,9 +91,8 @@ function M.check()
   end
 
   -- Binaries for auto-finding `opencode` process (Unix only)
-  local has_remote_host = opts and opts.server and opts.server.host and opts.server.host ~= "localhost"
   local has_port_configured = opts and opts.server and opts.server.port
-  if vim.fn.has("win32") == 0 and not has_remote_host and not has_port_configured then
+  if vim.fn.has("win32") == 0 and not has_port_configured then
     if vim.fn.executable("pgrep") == 1 then
       vim.health.ok("`pgrep` available.")
     else

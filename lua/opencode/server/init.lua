@@ -1,10 +1,5 @@
 ---@class opencode.server.Opts
 ---
----The host address of the `opencode` server.
----Defaults to `"localhost"` for local connections.
----Set to a remote IP or hostname for remote servers.
----@field host? string
----
 ---The port to look for `opencode` on.
 ---When set, _only_ this port will be checked.
 ---When not set, _all_ `opencode` processes will be checked.
@@ -21,7 +16,6 @@
 
 ---An `opencode` server.
 ---@class opencode.server.Server
----@field host string
 ---@field port number
 ---@field cwd string
 ---@field title string
@@ -31,11 +25,10 @@ Server.__index = Server
 
 ---Attempt to connect to an `opencode` server process and fetch its details.
 ---Rejects if connection or fetching details fails.
----@param host string
 ---@param port number
 ---@return Promise<opencode.server.Server>
-function Server.new(host, port)
-  local self = setmetatable({ host = host, port = port }, Server)
+function Server.new(port)
+  local self = setmetatable({ port = port }, Server)
   local Promise = require("opencode.promise")
 
   return Promise.new(function(resolve, reject)
@@ -44,10 +37,10 @@ function Server.new(host, port)
       if cwd then
         resolve(cwd)
       else
-        reject("No `opencode` responding at " .. host .. ":" .. port)
+        reject("No `opencode` responding on port: " .. port)
       end
     end, function()
-      reject("No `opencode` responding at " .. host .. ":" .. port)
+      reject("No `opencode` responding on port: " .. port)
     end)
   end)
     :next(function(cwd) ---@param cwd string
@@ -86,7 +79,7 @@ end
 ---@param opts? { max_time?: number }
 ---@return number job_id
 function Server:curl(path, method, body, on_success, on_error, opts)
-  local url = "http://" .. self.host .. ":" .. self.port .. path
+  local url = "http://localhost:" .. self.port .. path
   opts = opts or {
     max_time = 2,
   }
@@ -312,7 +305,7 @@ function Server.get_all()
     end
   end):next(function(processes) ---@param processes opencode.server.process.Process[]
     return Promise.all_settled(vim.tbl_map(function(process) ---@param process opencode.server.process.Process
-      return Server.new("localhost", process.port)
+      return Server.new(process.port)
     end, processes)):next(
       function(results) ---@param results Promise<{status: string, value?: opencode.server.Server, reason?: any}[]>
         local servers = {}
@@ -345,14 +338,13 @@ end
 function Server.get(launch)
   launch = launch ~= false
   local server_opts = require("opencode.config").opts.server or {}
-  local configured_host = server_opts.host or "localhost"
   local configured_port = server_opts.port
   local connected_server = require("opencode.events").connected_server
   local Promise = require("opencode.promise")
 
   return (
     connected_server and Promise.resolve(connected_server) -- Maaayy want to verify the connected server is still valid, but it should pretty reliably disconnect itself ASAP
-    or type(configured_port) == "number" and Server.new(configured_host, configured_port)
+    or type(configured_port) == "number" and Server.new(configured_port)
     or type(configured_port) == "function"
       and Promise.new(function(resolve, reject)
         configured_port(function(port) ---@param port number|nil
@@ -363,7 +355,7 @@ function Server.get(launch)
           end
         end)
       end):next(function(port)
-        return Server.new(configured_host, port)
+        return Server.new(port)
       end)
     or Server.get_all():next(function(servers) ---@param servers opencode.server.Server[]
       local nvim_cwd = vim.fn.getcwd()
