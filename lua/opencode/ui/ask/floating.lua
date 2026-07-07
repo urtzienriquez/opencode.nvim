@@ -70,7 +70,6 @@ function M.input(opts)
     if rows_below >= total_visual_height then
       float_row = (screen_pos.row + 3) + row_offset
     elseif rows_above >= total_visual_height + row_offset then
-      -- float_row = screen_pos.row - total_visual_height - row_offset
       float_row = (screen_pos.row - 3) + row_offset
     else
       float_row = (screen_pos.row + 3) + row_offset
