@@ -1,5 +1,3 @@
----@module 'snacks.input'
-
 local M = {}
 
 ---@class opencode.ask.Opts
@@ -10,7 +8,9 @@ local M = {}
 ---Options for [`snacks.input`](https://github.com/folke/snacks.nvim/blob/main/docs/input.md).
 ---@field snacks? snacks.input.Opts
 
----Prompt for input with `vim.ui.input`, with context- and server-aware completion.
+---Prompt for input, with context- and server-aware completion.
+---
+---Uses `snacks.input` if available, otherwise a built-in floating window.
 ---
 ---@param default? string Text to pre-fill the input with.
 ---@param context opencode.Context
@@ -21,20 +21,23 @@ function M.ask(default, context)
   return require("opencode.server")
     .get()
     :next(function(server) ---@param server opencode.server.Server
-      ---@type snacks.input.Opts
-      local input_opts = {
-        default = default,
-        highlight = function(text)
+      local config = require("opencode.config")
+      local input_opts = vim.tbl_deep_extend("force", { default = default }, config.opts.ask)
+      input_opts = vim.tbl_deep_extend("force", input_opts, config.opts.ask.snacks)
+
+      local snacks_ok, snacks = pcall(require, "snacks")
+      ---@cast snacks Snacks
+      if snacks_ok and snacks.config.get("input", {}).enabled then
+        input_opts.highlight = function(text)
           local rendered = context:render(text, server.subagents)
           return context.input_highlight(rendered.input)
-        end,
-      }
-      -- Nest `snacks.input` options under `opts.ask.snacks` for consistency with other `snacks`-exclusive config,
-      -- and to keep its fields optional. Double-merge is kinda ugly but seems like the lesser evil.
-      input_opts = vim.tbl_deep_extend("force", input_opts, require("opencode.config").opts.ask)
-      input_opts = vim.tbl_deep_extend("force", input_opts, require("opencode.config").opts.ask.snacks)
+        end
+        return Promise.input(input_opts)
+      end
 
-      return Promise.input(input_opts)
+      input_opts.context = context
+      input_opts.server = server
+      return require("opencode.ui.ask.floating").input(input_opts)
     end)
     :catch(function(err)
       context:resume()

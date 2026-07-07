@@ -1,5 +1,3 @@
----@module 'snacks'
-
 local M = {}
 
 function M.check()
@@ -111,25 +109,30 @@ function M.check()
     end
   end
 
-  vim.health.start("opencode.nvim [snacks]")
+  vim.health.start("opencode.nvim [UI]")
 
+  -- ask()
   local snacks_ok, snacks = pcall(require, "snacks")
-  ---@cast snacks Snacks Cast because CI lint resolves to our `snacks.lua` instead...
-  if snacks_ok then
-    if snacks.config.get("input", {}).enabled then
-      vim.health.ok("`snacks.input` is enabled: `ask()` will be enhanced.")
-      -- TODO: Maybe healthcheck verifying that their completion plugin has the LSP source enabled by default?
-      -- Otherwise they need to explicitly enable it for `opencode_ask` filetype.
-    else
-      vim.health.warn("`snacks.input` is disabled: `ask()` will not be enhanced.")
-    end
-    if snacks.config.get("picker", {}).enabled then
-      vim.health.ok("`snacks.picker` is enabled: `select()` will be enhanced.")
-    else
-      vim.health.warn("`snacks.picker` is disabled: `select()` will not be enhanced.")
-    end
+  ---@cast snacks Snacks
+  if snacks_ok and snacks.config.get("input", {}).enabled then
+    vim.health.ok("`snacks.input` is active: `ask()` will use a floating window with LSP completion.")
   else
-    vim.health.warn("`snacks.nvim` is not available: `ask()` and `select()` will not be enhanced.")
+    vim.health.ok("Built-in floating input is active: `ask()` will use a floating window with LSP completion.")
+  end
+
+  -- select()
+  if snacks_ok and snacks.config.get("picker", {}).enabled then
+    vim.health.ok("`snacks.picker` is active: `select()` will be enhanced.")
+  else
+    local fzf_ui_ok, fzf_ui = pcall(require, "fzf-lua.providers.ui_select")
+    if fzf_ui_ok and fzf_ui.is_registered() then
+      vim.health.ok("`fzf-lua` (ui_select) is active: `select()` will be enhanced.")
+    else
+      vim.health.warn(
+        "`select()`: no enhanced provider found."
+          .. " Install `snacks.nvim` (picker) or configure `fzf-lua` with `ui_select=true`."
+      )
+    end
   end
 end
 

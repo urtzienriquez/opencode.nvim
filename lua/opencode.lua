@@ -9,11 +9,9 @@ local M = {}
 ---
 --- - Press the up arrow to browse recent asks.
 --- - Highlights and completes contexts and `opencode` subagents.
----   - Press `<Tab>` to trigger built-in completion.
 --- - End the prompt with `\n` to append instead of submit.
---- - Additionally, when using `snacks.input`:
----   - Press `<S-CR>` to append instead of submit.
----   - Offers completions via in-process LSP.
+--- - Press `<S-CR>` to append instead of submit.
+--- - Offers completions via in-process LSP.
 ---
 ---@param default? string Text to pre-fill the input with.
 ---@param opts? opencode.api.prompt.Opts Options for `prompt()`.
@@ -49,7 +47,7 @@ end
 --- - Commands
 --- - Server controls
 ---
---- Highlights and previews items when using `snacks.picker`.
+--- Highlights and previews items when using `snacks.picker` or `fzf-lua`.
 ---
 ---@param opts? opencode.select.Opts Override configured options for this call.
 M.select = function(opts)

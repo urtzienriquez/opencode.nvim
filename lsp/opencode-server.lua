@@ -47,7 +47,7 @@ handlers[ms.initialize] = function(params, callback)
       },
     },
     serverInfo = {
-      name = "opencode",
+      name = "opencode-server",
     },
   })
 end
@@ -242,7 +242,7 @@ end
 --- - Hover: ask `opencode` to explain the symbol under the cursor, using the surrounding code as context.
 ---@type vim.lsp.Config
 return {
-  name = "opencode",
+  name = "opencode-server",
   filetypes = require("opencode.config").opts.lsp.filetypes,
   cmd = function(dispatchers, config)
     return {
@@ -258,7 +258,7 @@ return {
         -- This loop successfully removes us, but idk where to put it to respond to `vim.lsp.enable false`
         -- `is_closing` gets called, but not `terminate`.
         -- for _, client in ipairs(vim.lsp.get_clients()) do
-        --   if client.name == "opencode" then
+        --   if client.name == "opencode-server" then
         --     for bufnr, _ in pairs(client.attached_buffers) do
         --       vim.lsp.buf_detach_client(bufnr, client.id)
         --     end
