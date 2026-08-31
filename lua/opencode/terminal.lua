@@ -65,7 +65,7 @@ function M.open(cmd, opts)
 end
 
 function M.close()
-  local job_id = bufnr and vim.b[bufnr].terminal_job_id
+  local job_id = bufnr and vim.api.nvim_buf_is_valid(bufnr) and vim.b[bufnr].terminal_job_id
   if job_id then
     vim.fn.jobstop(job_id)
   end
